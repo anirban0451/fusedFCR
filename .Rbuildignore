@@ -1,2 +1,4 @@
 ^fusedFCR\.Rproj$
 ^\.Rproj\.user$
+^testing_codes(/|$)
+^LICENSE\.md$
