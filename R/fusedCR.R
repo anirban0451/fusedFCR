@@ -15,6 +15,7 @@ post_process_beta <- function(beta_matrix, zero_threshold = 1e-2, fusion_decimal
 #'
 #' @param X The input feature matrix (N x P)
 #' @param Y The vector of discrete survival times (length N)
+#' @useDynLib YourPackageName, .registration = TRUE
 #' @param beta_matrix The learned parameter matrix (P x T)
 #' @param standardize Whether to standardize the features before calculating likelihood (default: FALSE)
 #' @return The log-likelihood of the data given the model parameters
