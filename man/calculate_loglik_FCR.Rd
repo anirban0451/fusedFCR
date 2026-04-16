@@ -2,24 +2,19 @@
 % Please edit documentation in R/fusedCR.R
 \name{calculate_loglik_FCR}
 \alias{calculate_loglik_FCR}
-\title{Calculate the log-likelihood of the data under forward continuation ratio assumption.
-This is used for evaluating the fit of the model, and also for calculating EBIC during tuning.}
+\title{Calculate log-likelihood for FCR}
 \usage{
 calculate_loglik_FCR(X, Y, beta_matrix, standardize = FALSE)
 }
 \arguments{
-\item{X}{The input feature matrix (N x P)}
+\item{X}{Feature matrix}
 
-\item{Y}{The vector of discrete survival times (length N)}
+\item{Y}{Survival times}
 
-\item{beta_matrix}{The learned parameter matrix (P x T)}
+\item{beta_matrix}{Learned parameters}
 
-\item{standardize}{Whether to standardize the features before calculating likelihood (default: FALSE)}
-}
-\value{
-The log-likelihood of the data given the model parameters
+\item{standardize}{Boolean}
 }
 \description{
-Calculate the log-likelihood of the data under forward continuation ratio assumption.
-This is used for evaluating the fit of the model, and also for calculating EBIC during tuning.
+Calculate log-likelihood for FCR
 }

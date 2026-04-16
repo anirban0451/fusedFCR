@@ -2,7 +2,7 @@
 % Please edit documentation in R/fusedCR.R
 \name{cv_ISTA_sequential}
 \alias{cv_ISTA_sequential}
-\title{Title}
+\title{Sequential Cross-Validation}
 \usage{
 cv_ISTA_sequential(
   X,
@@ -18,9 +18,6 @@ cv_ISTA_sequential(
   seed = 123
 )
 }
-\arguments{
-\item{seed}{}
-}
 \description{
-Title
+Sequential Cross-Validation
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fusedCR.R
 \name{run_FCR_ISTA}
 \alias{run_FCR_ISTA}
-\title{Title}
+\title{Fit FCR model via ISTA}
 \usage{
 run_FCR_ISTA(
   X,
@@ -16,9 +16,6 @@ run_FCR_ISTA(
   fusion_decimals = 4
 )
 }
-\arguments{
-\item{fusion_decimals}{}
-}
 \description{
-Title
+Fit FCR model via ISTA
 }

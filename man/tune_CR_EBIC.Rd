@@ -2,7 +2,7 @@
 % Please edit documentation in R/fusedCR.R
 \name{tune_CR_EBIC}
 \alias{tune_CR_EBIC}
-\title{Title}
+\title{Tune model using EBIC}
 \usage{
 tune_CR_EBIC(
   X,
@@ -16,9 +16,6 @@ tune_CR_EBIC(
   standardize = FALSE
 )
 }
-\arguments{
-\item{standardize}{}
-}
 \description{
-Title
+Tune model using EBIC
 }

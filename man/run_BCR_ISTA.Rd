@@ -2,7 +2,7 @@
 % Please edit documentation in R/fusedCR.R
 \name{run_BCR_ISTA}
 \alias{run_BCR_ISTA}
-\title{Title}
+\title{Fit BCR model via ISTA}
 \usage{
 run_BCR_ISTA(
   X,
@@ -16,9 +16,6 @@ run_BCR_ISTA(
   fusion_decimals = 4
 )
 }
-\arguments{
-\item{fusion_decimals}{}
-}
 \description{
-Title
+Fit BCR model via ISTA
 }

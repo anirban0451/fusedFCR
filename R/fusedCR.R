@@ -10,15 +10,12 @@ post_process_beta <- function(beta_matrix, zero_threshold = 1e-2, fusion_decimal
   return(clean_beta)
 }
 
-#' Calculate the log-likelihood of the data under forward continuation ratio assumption.
-#' This is used for evaluating the fit of the model, and also for calculating EBIC during tuning.
-#'
-#' @param X The input feature matrix (N x P)
-#' @param Y The vector of discrete survival times (length N)
-#' @useDynLib YourPackageName, .registration = TRUE
-#' @param beta_matrix The learned parameter matrix (P x T)
-#' @param standardize Whether to standardize the features before calculating likelihood (default: FALSE)
-#' @return The log-likelihood of the data given the model parameters
+#' Calculate log-likelihood for FCR
+#' @param X Feature matrix
+#' @param Y Survival times
+#' @param beta_matrix Learned parameters
+#' @param standardize Boolean
+#' @useDynLib fusedFCR, .registration = TRUE
 #' @export
 calculate_loglik_FCR <- function(X, Y, beta_matrix, standardize = FALSE) {
   N <- as.integer(nrow(X))
@@ -45,6 +42,8 @@ calculate_loglik_FCR <- function(X, Y, beta_matrix, standardize = FALSE) {
   return(-result$pGG)
 }
 
+#' Calculate log-likelihood for BCR
+#' @export
 calculate_loglik_BCR <- function(X, Y, beta_matrix, standardize = FALSE) {
   N <- as.integer(nrow(X))
   TT <- as.integer(ncol(beta_matrix))
@@ -83,23 +82,8 @@ calculate_loglik_BCR <- function(X, Y, beta_matrix, standardize = FALSE) {
   return(-result$pGG)
 }
 
-
-#' Title
-#'
-#' @param X
-#' @param Y
-#' @param lambda1
-#' @param lambda2
-#' @param standardize
-#' @param max_iter
-#' @param tol
-#' @param zero_threshold
-#' @param fusion_decimals
-#'
-#' @returns
+#' Fit FCR model via ISTA
 #' @export
-#'
-#' @examples
 run_FCR_ISTA <- function(X, Y, lambda1, lambda2,
                          standardize = TRUE,
                          max_iter = 1000,
@@ -173,22 +157,8 @@ run_FCR_ISTA <- function(X, Y, lambda1, lambda2,
   ))
 }
 
-#' Title
-#'
-#' @param X
-#' @param Y
-#' @param lambda1
-#' @param lambda2
-#' @param standardize
-#' @param max_iter
-#' @param tol
-#' @param zero_threshold
-#' @param fusion_decimals
-#'
-#' @returns
+#' Fit BCR model via ISTA
 #' @export
-#'
-#' @examples
 run_BCR_ISTA <- function(X, Y, lambda1, lambda2,
                          standardize = TRUE,
                          max_iter = 1000,
@@ -262,6 +232,8 @@ run_BCR_ISTA <- function(X, Y, lambda1, lambda2,
   ))
 }
 
+#' Predict probabilities for FCR
+#' @export
 predict_FCR <- function(X_new, beta_matrix) {
 
   # 1. Ensure X_new has an intercept column
@@ -310,6 +282,8 @@ predict_FCR <- function(X_new, beta_matrix) {
   ))
 }
 
+#' Predict probabilities for BCR
+#' @export
 predict_BCR <- function(X_new, beta_matrix) {
 
   # 1. Ensure X_new has an intercept column
@@ -368,24 +342,9 @@ predict_BCR <- function(X_new, beta_matrix) {
   ))
 }
 
-#' Title
-#'
-#' @param X
-#' @param Y
-#' @param cr_method
-#' @param lambda1_grid
-#' @param lambda2_grid
-#' @param K_folds
-#' @param standardize
-#' @param max_iter
-#' @param tol
-#' @param dll_path
-#' @param seed
-#'
-#' @returns
+#' Sequential Cross-Validation
+#' @importFrom foreach %do% foreach
 #' @export
-#'
-#' @examples
 cv_ISTA_sequential <- function(X, Y, cr_method = c("FCR", "BCR"), lambda1_grid, lambda2_grid, K_folds = 5,
                                standardize = TRUE, max_iter = 1000, tol = 1e-5,
                                dll_path = paste0("fusedFCRsource", .Platform$dynlib.ext),
@@ -481,7 +440,8 @@ cv_ISTA_sequential <- function(X, Y, cr_method = c("FCR", "BCR"), lambda1_grid, 
   ))
 }
 
-
+#' Extract optimal lambdas using 1SE rule
+#' @export
 extract_cv_optimal_lambdas <- function(cv_df, criterion = "sparsity") {
 
   # 1. Identify the absolute minimum model
@@ -546,7 +506,6 @@ extract_cv_optimal_lambdas <- function(cv_df, criterion = "sparsity") {
   return(optimal_point)
 }
 
-
 calculate_fused_df <- function(beta_matrix) {
   TT <- ncol(beta_matrix)
 
@@ -584,22 +543,8 @@ calculate_fused_df <- function(beta_matrix) {
   ))
 }
 
-#' Title
-#'
-#' @param X
-#' @param Y
-#' @param cr_method
-#' @param lambda1_grid
-#' @param lambda2_grid
-#' @param gamma
-#' @param T_max
-#' @param ebic_method
-#' @param standardize
-#'
-#' @returns
+#' Tune model using EBIC
 #' @export
-#'
-#' @examples
 tune_CR_EBIC <- function(X, Y, cr_method = "FCR", lambda1_grid, lambda2_grid, gamma = 0.5, T_max = 6, ebic_method = "per_p",
                          standardize = FALSE) {
 
