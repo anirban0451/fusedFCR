@@ -228,7 +228,9 @@ run_BCR_ISTA <- function(X, Y, lambda1, lambda2,
     iterations = actual_iters,
     objective  = fit$objectives[1:actual_iters],
     tau_trace  = fit$taus[1:actual_iters],
-    convergence= fit$criterions[1:actual_iters]
+    convergence= fit$criterions[1:actual_iters],
+    lambda1    = lambda1,
+    lambda2    = lambda2
   ))
 }
 
