@@ -622,3 +622,45 @@ tune_CR_EBIC <- function(X, Y, cr_method = "FCR", lambda1_grid, lambda2_grid, ga
   cat("EBIC Grid Search Complete.\n")
   return(ebic_results)
 }
+
+fit_cv_CR = function(X, Y, lam1_grid, lam2_grid,
+                     cv_fold = 5, cr_method = "FCR",
+                     max_iter = 10000, tol = 1e-4, T_max = 6, cores = 10){
+  if(cr_method == "FCR"){
+    run_CR_ISTA = run_FCR_ISTA
+    predict_CR = predict_FCR
+  } else if(cr_method == "BCR"){
+    run_CR_ISTA = run_BCR_ISTA
+    predict_CR = predict_BCR
+  }else{
+    stop("cr_method should be populated with either 'FCR' or 'BCR'.")
+  }
+
+  TT = T_max - 1
+  cat("Executing Micro-Grid Search...\n")
+  cv_output <- cv_ISTA_parallel(X=X, Y=Y, lambda1_grid = lam1_grid, lambda2_grid = lam2_grid, K_folds = cv_fold,
+                                max_iter = max_iter, tol = tol, cr_method = cr_method, ncores = cores)
+
+
+  # 1. Extract the Base Results
+  cv_df <- cv_output$cv_results
+
+  # 2. Extract the Three Target Models
+  min_pt <- cv_df[which.min(cv_df$log_loss), ]
+  sparse_pt <- extract_optimal_lambdas(cv_df, criterion = "sparsity")
+
+  final_fit_min_cv = run_CR_ISTA(X=X, Y=Y,
+                                 lambda1=min_pt$lambda1, lambda2=min_pt$lambda2,
+                                 standardize = TRUE,
+                                 max_iter = max_iter,
+                                 tol = tol)
+
+  final_fit_sp_cv = run_CR_ISTA(X=X, Y=Y,
+                                lambda1=sparse_pt$lambda1, lambda2=sparse_pt$lambda2,
+                                standardize = TRUE,
+                                max_iter = max_iter,
+                                tol = tol)
+  return(list(min_cv_fit = final_fit_min_cv, min_cv_lambda = min_pt,
+              sparse_fit = final_fit_sp_cv, sparse_cv_lambda = sparse_pt))
+}
+
