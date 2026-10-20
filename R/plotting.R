@@ -130,7 +130,7 @@ select_genes <- function(fit, threshold = 0, rank_by = c("max", "norm")) {
 #'
 #' @importFrom ggplot2 .data
 #' @export
-plot_lollipop <- function(fit, threshold = 0, top_n = 6, ncol = 6, rank_by = c("max", "l2"), transition_labels = NULL, scales = c("fixed", "free_y"), colors = c(Positive = "#B2182B", Negative = "#2166AC"), base_size = 9, file = NULL, width_per_col = 1.6, height_per_row = 1.8, dpi = 300) {
+plot_lollipop <- function(fit, threshold = 0, top_n = 6, ncol = 6, rank_by = c("max", "norm"), transition_labels = NULL, scales = c("fixed", "free_y"), colors = c(Positive = "#B2182B", Negative = "#2166AC"), base_size = 9, file = NULL, width_per_col = 1.6, height_per_row = 1.8, dpi = 300) {
   scales <- match.arg(scales)
   selected <- select_genes(fit, threshold = threshold, rank_by = rank_by)
   if (nrow(selected) == 0) {
