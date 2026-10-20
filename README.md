@@ -76,7 +76,7 @@ plot_pseudotime_density(pt, true_stage = Y_test, bw = 0.03)
 
 ![Density of predicted pseudotime by true stage](man/figures/README-density.png)
 
-Both plotting functions take a `file` argument (for example `file = "lollipop.pdf"`) to save the figure; the lollipop figure's height grows with the number of panel rows.
+Both plotting functions take a `file` argument (for example `file = "lollipop.pdf"`) to save the figure; the lollipop figure's height grows with the number of panel rows. Also, note that for the density plots, the shape of the density curves depends on the smoothing bandwidth (bw).
 
 ## Using your own data
 
