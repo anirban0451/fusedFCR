@@ -120,9 +120,6 @@ FusedCR = function(X, Y, lam1_grid, lam2_grid,
 #' @param ncores Integer number of parallel workers to request (capped at
 #'   \code{parallel::detectCores() - 2}). Default 10.
 #' @param seed Integer random seed for fold assignment. Default 123.
-#' @param dll_path Character path to the compiled shared library containing the
-#'   ISTA C routines, loaded in the main session and on each worker.
-#'
 #' @return A list with a single element \code{cv_results}, a data frame with
 #'   columns \code{lambda1}, \code{lambda2}, \code{log_loss}, \code{misclass_rate},
 #'   and \code{log_loss_se}, one row per lambda1/lambda2 combination.
@@ -132,8 +129,7 @@ FusedCR = function(X, Y, lam1_grid, lam2_grid,
 cv_ISTA_parallel <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_grid, K_folds = 5
                              , standardize = TRUE, max_iter = 1000, tol = 1e-4,
                              ncores = 10,
-                             seed = 123,
-                             dll_path = paste0("fusedFCRsource", .Platform$dynlib.ext)
+                             seed = 123
 ) {
 
   N <- nrow(X)
@@ -151,10 +147,7 @@ cv_ISTA_parallel <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_g
     stop("cr_method should be populated with 'FCR'.") # either 'FCR' or 'BCR'."
   }
 
-  # 1. Load the C++ library ONCE into the main session
-  dyn.load(dll_path)
-
-  # 2. Setup stratified data folds
+  # Setup stratified data folds
   set.seed(seed)
   Y_fac <- as.factor(Y)
 
@@ -171,7 +164,7 @@ cv_ISTA_parallel <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_g
     fold_indices[cls_idx] <- rep(1:K_folds, length.out = length(cls_idx))
   }
 
-  # 3. Flatten the Task Grid
+  # Flatten the Task Grid
   task_grid <- expand.grid(lambda1 = lambda1_grid,
                            lambda2 = lambda2_grid,
                            fold = 1:K_folds)
@@ -184,20 +177,18 @@ cv_ISTA_parallel <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_g
 
   doParallel::registerDoParallel(cl)
 
-  dll_path <- normalizePath(dll_path, mustWork = TRUE)
-
   parallel::clusterExport(
     cl,
     varlist = c(
       "task_grid", "X", "Y", "fold_indices",
-      "run_CR_ISTA", "predict_CR", "dll_path",
+      "run_CR_ISTA", "predict_CR",
       "standardize", "max_iter", "tol", "K_folds", "post_process_beta"
     ),
     envir = environment()
   )
 
   parallel::clusterEvalQ(cl, {
-    dyn.load(dll_path)
+    library(fusedFCR)
     NULL
   })
 
@@ -206,10 +197,8 @@ cv_ISTA_parallel <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_g
   }, add = TRUE)
 
 
-  # 4. Execute the Parallel Loop (%dopar%)
+  #  Execute the Parallel Loop (%dopar%)
   parallel_results <- foreach(i = 1:nrow(task_grid), .combine = rbind) %dopar% {
-
-    dyn.load(dll_path)
 
     lam1 <- task_grid$lambda1[i]
     lam2 <- task_grid$lambda2[i]
@@ -245,7 +234,7 @@ cv_ISTA_parallel <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_g
                log_loss = fold_log_loss, misclass_rate = fold_misclass)
   }
 
-  # 5. Aggregate the results across the K folds
+  # Aggregate the results across the K folds
 
   # A. Calculate the Mean Log-Loss and Misclassification Rate
   avg_results <- aggregate(cbind(log_loss, misclass_rate) ~ lambda1 + lambda2,
@@ -405,7 +394,7 @@ calculate_loglik_FCR <- function(X, Y, beta_matrix, standardize = FALSE) {
   Nt <- as.integer(sapply(1:TT, function(t) sum(Y >= t)))
   std_flag <- as.integer(ifelse(standardize, 1, 0))
 
-  result <- .C("obj_g",
+  result <- .C("obj_g", PACKAGE = "fusedFCR",
                YY = as.double(Y),
                XX = as.double(X_with_int), # Pass the padded matrix
                beta = as.double(beta_matrix),
@@ -478,7 +467,7 @@ run_FCR_ISTA <- function(X, Y, lambda1, lambda2,
 
   # --- EXECUTE C++ CODE ---
   # Every argument must be strictly coerced for the .C interface
-  fit <- .C("GGD",
+  fit <- .C("GGD", PACKAGE = "fusedFCR",
             YY          = as.double(Y_num),
             XX          = as.double(X_mat),
             beta        = as.double(init_beta),
@@ -824,8 +813,6 @@ calculate_fused_df <- function(beta_matrix) {
 #' @param standardize Logical; whether to standardize predictors within \code{run_CR_ISTA}. Default TRUE.
 #' @param max_iter Integer maximum ISTA iterations. Default 1000.
 #' @param tol Numeric convergence tolerance for ISTA. Default 1e-5.
-#' @param dll_path Character path to the compiled shared library containing the
-#'   ISTA C routines.
 #' @param seed Integer random seed for fold assignment. Default 123.
 #'
 #' @return A list with a single element \code{cv_results}, a data frame with
@@ -835,9 +822,8 @@ calculate_fused_df <- function(beta_matrix) {
 #' @importFrom foreach %do% foreach
 #' @export
 cv_ISTA_sequential <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2_grid, K_folds = 5,
-                               standardize = TRUE, max_iter = 1000, tol = 1e-5,
-                               dll_path = paste0("fusedFCRsource", .Platform$dynlib.ext),
-                               seed = 123) {
+                               standardize = TRUE, max_iter =
+                                 1000, tol = 1e-5, seed = 123) {
 
   N <- nrow(X)
   cr_method <- match.arg(cr_method)
@@ -854,21 +840,18 @@ cv_ISTA_sequential <- function(X, Y, cr_method = c("FCR"), lambda1_grid, lambda2
     stop("cr_method should be populated with 'FCR'.") # either 'FCR' or 'BCR'."
   }
 
-  # # 1. Load the C++ library ONCE into the main session
-  dyn.load(dll_path)
-
-  # 2. Setup Data Folds
+  #  Setup Data Folds
   set.seed(seed)
   fold_indices <- sample(rep(1:K_folds, length.out = N))
 
-  # 3. Flatten the Task Grid
+  #  Flatten the Task Grid
   task_grid <- expand.grid(lambda1 = lambda1_grid,
                            lambda2 = lambda2_grid,
                            fold = 1:K_folds)
 
   cat(sprintf("Starting sequential CV for %d total models...\n", nrow(task_grid)))
 
-  # 4. Execute the Sequential Loop (%do%)
+  #  Execute the Sequential Loop (%do%)
   sequential_results <- foreach(i = 1:nrow(task_grid), .combine = rbind) %do% {
 
     lam1 <- task_grid$lambda1[i]

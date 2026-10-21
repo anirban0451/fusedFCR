@@ -15,4 +15,5 @@ Imports:
     Rcpp,
     foreach,
     doParallel,
+    ggplot2,
     stats
